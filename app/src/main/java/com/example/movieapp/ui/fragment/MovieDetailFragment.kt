@@ -1,12 +1,13 @@
 package com.example.movieapp.ui.fragment
 
 import android.os.Bundle
+import android.util.Log
+import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -21,7 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 class MovieDetailFragment : Fragment() {
     private lateinit var binding: FragmentMovieDetailBinding
     private val args: MovieDetailFragmentArgs by navArgs()
-    private lateinit var viewModel: MovieDetailViewModel // ViewModel-i manual olaraq yaradırıq
+    private lateinit var viewModel: MovieDetailViewModel
     private lateinit var auth: FirebaseAuth
     private var videoUrl: String? = null
     private lateinit var reviewAdapter: ReviewsAdapter
@@ -37,10 +38,10 @@ class MovieDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // FirebaseAuth obyektini manual olaraq yaradırıq
+        // FirebaseAuth obyektini yaradırıq
         auth = FirebaseAuth.getInstance()
 
-        // ViewModel-i manual olaraq yaradırıq
+        // ViewModel-i yaradırıq
         viewModel = ViewModelProvider(this).get(MovieDetailViewModel::class.java)
 
         val apiKey = "827c2738d945feb56a52ad0fc38dc665"
@@ -70,6 +71,7 @@ class MovieDetailFragment : Fragment() {
         viewModel.reviewDetails.observe(viewLifecycleOwner) { reviews ->
             if (reviews != null && reviews.isNotEmpty()) {
                 reviewAdapter.submitList(reviews)
+                Log.e("TAGreview", "observeReviews: ${reviews} reviews loaded.")
             } else {
                 Toast.makeText(requireContext(), "No reviews available.", Toast.LENGTH_SHORT).show()
             }
@@ -103,7 +105,10 @@ class MovieDetailFragment : Fragment() {
 
     // Filmin məlumatlarını ekranda göstəririk
     private fun populateMovieDetails(movie: Movie) {
+        // Saxlama statusunu yoxlayırıq
         viewModel.checkSaveStatus(movie.id.toString(), binding.iconSave)
+
+        // Filmin məlumatlarını ekranda göstəririk
         binding.textTitle.text = movie.title
         binding.textDescription.text = movie.overview
         binding.textDescription2.text = movie.overview
@@ -111,7 +116,11 @@ class MovieDetailFragment : Fragment() {
 
         // Saxlama düyməsinin funksionallığı
         binding.iconSave.setOnClickListener {
-            viewModel.toggleSaveStatus(movie.id.toString(), binding.iconSave)
+            viewModel.toggleSaveStatus(
+                movieId = movie.id.toString(),
+                posterPath = movie.poster_path,
+                imageView = binding.iconSave
+            )
         }
 
         // Şəkilləri yükləyirik

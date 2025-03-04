@@ -9,16 +9,17 @@ import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.movieapp.data.models.Movie
 import com.example.movieapp.data.utils.Resource
 import com.example.movieapp.ui.adapters.SavedAdapter
 import com.example.movieapp.viewmodel.SavedViewModel
 import com.example.movieapp.databinding.FragmentSavedBinding
 
-
 class SavedFragment : Fragment() {
+
     private lateinit var binding: FragmentSavedBinding
     private lateinit var savedAdapter: SavedAdapter
-    val viewModel: SavedViewModel by viewModels()
+    private val viewModel: SavedViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,42 +32,62 @@ class SavedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Adapteri təyin et
         savedAdapter = SavedAdapter { movie ->
-            movieDetail(movie.title)
+            movieDetail(movie) // Bütün Movie obyektini ötür
         }
         binding.rvSaves.adapter = savedAdapter
-        binding.rvSaves.layoutManager = GridLayoutManager(context, 2)
 
+        // GridLayoutManager-i təyin et
+        val layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.rvSaves.layoutManager = layoutManager
+
+        // API açarını təyin et
         val apiKey = "827c2738d945feb56a52ad0fc38dc665"
+
+        // Məlumatları yüklə
         viewModel.fetchSavedMovies(apiKey)
 
+        // Məlumatları müşahidə et
         viewModel.movieResult.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Loading -> {
+                    // Loading indicator göstər
+                    binding.progressBar.visibility = View.VISIBLE
+                    binding.rvSaves.visibility = View.GONE
+                    binding.textEmpty.visibility = View.GONE
                 }
                 is Resource.Success -> {
+                    // Loading indicator gizlət
+                    binding.progressBar.visibility = View.GONE
+                    binding.rvSaves.visibility = View.VISIBLE
+
                     resource.data?.let { movies ->
                         if (movies.isNotEmpty()) {
                             savedAdapter.submitList(movies)
-                            Log.e("TAG", "Adapter list: $movies")
+                            binding.textEmpty.visibility = View.GONE
                         } else {
+                            // Boş siyahı halında mesaj göstər
+                            binding.textEmpty.visibility = View.VISIBLE
+                            binding.textEmpty.text = "No saved movies found."
                         }
                     }
                 }
                 is Resource.Error -> {
+                    // Loading indicator gizlət
+                    binding.progressBar.visibility = View.GONE
+                    binding.rvSaves.visibility = View.GONE
+                    binding.textEmpty.visibility = View.VISIBLE
+                    binding.textEmpty.text = "Error: ${resource.exception?.message}"
+
                     Log.e("SavedFragment", "Error: ${resource.exception?.message}")
                 }
             }
         }
-
     }
 
-    private fun movieDetail(movieTitle: String?) {
-        if (movieTitle != null) {
-            val action = SavedFragmentDirections.actionSavedFragment3ToMovieDetailFragment(movieTitle)
-            findNavController().navigate(action)
-        } else {
-            Log.e("SavedFragment", "Movie title is null")
-        }
+    private fun movieDetail(movie: Movie) {
+        val action = SavedFragmentDirections.actionSavedFragment3ToMovieDetailFragment(movie.title)
+        findNavController().navigate(action)
     }
 }

@@ -47,25 +47,53 @@ class MovieDetailViewModel : ViewModel() {
             }
     }
 
-    // Saxlanılan filmi silmək üçün funksiya
-    fun removeSaveFromFirestore(postId: String) {
-        firebaseFirestore.collection("Saves").document(firebaseAuth.currentUser!!.uid)
-            .update(postId, FieldValue.delete())
+    // Filmi Firebase-ə əlavə etmək üçün funksiya
+    fun addSaveToFirebase(movieId: String, posterPath: String?) {
+        val userId = firebaseAuth.currentUser?.uid ?: return
+        val saveData = hashMapOf(
+            "posterPath" to posterPath,
+            "isSaved" to true
+        )
+
+        firebaseFirestore.collection("Saves")
+            .document(userId)
+            .set(mapOf(movieId to saveData), SetOptions.merge())
             .addOnSuccessListener {
-                // Success handling can be added here if needed
+                // Uğurlu əməliyyat
             }
             .addOnFailureListener { exception ->
-                // Failure handling can be added here if needed
+                // Xəta baş verdi
+            }
+    }
+
+    // Filmi Firebase-dən silmək üçün funksiya
+    fun removeSaveFromFirestore(movieId: String) {
+        val userId = firebaseAuth.currentUser?.uid ?: return
+
+        firebaseFirestore.collection("Saves")
+            .document(userId)
+            .update(movieId, FieldValue.delete())
+            .addOnSuccessListener {
+                // Uğurlu əməliyyat
+            }
+            .addOnFailureListener { exception ->
+                // Xəta baş verdi
             }
     }
 
     // Saxlama statusunu yoxlamaq üçün funksiya
-    fun checkSaveStatus(postId: String, imageView: ImageView) {
-        firebaseFirestore.collection("Saves").document(firebaseAuth.currentUser!!.uid).get()
+    fun checkSaveStatus(movieId: String, imageView: ImageView) {
+        val userId = firebaseAuth.currentUser?.uid ?: return
+
+        firebaseFirestore.collection("Saves")
+            .document(userId)
+            .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val savedPostId = document.getBoolean(postId) ?: false
-                    if (savedPostId) {
+                    val movieData = document.get(movieId) as? Map<*, *>
+                    val isSaved = movieData?.get("isSaved") as? Boolean ?: false
+
+                    if (isSaved) {
                         imageView.setImageResource(R.drawable.ic_saved)
                         imageView.tag = "saved"
                     } else {
@@ -78,24 +106,25 @@ class MovieDetailViewModel : ViewModel() {
                 }
             }
             .addOnFailureListener { exception ->
-                // Failure handling can be added here if needed
+                // Xəta baş verdi
             }
     }
 
     // Saxlama statusunu dəyişdirmək üçün funksiya
-    fun toggleSaveStatus(postId: String, imageView: ImageView) {
+    fun toggleSaveStatus(movieId: String, posterPath: String?, imageView: ImageView) {
         val tag = imageView.tag?.toString() ?: ""
 
         if (tag == "saved") {
             imageView.setImageResource(R.drawable.ic_save)
             imageView.tag = "save"
-            removeSaveFromFirestore(postId)
+            removeSaveFromFirestore(movieId)
         } else {
             imageView.setImageResource(R.drawable.ic_saved)
             imageView.tag = "saved"
-            addSaveToFirebase(postId)
+            addSaveToFirebase(movieId, posterPath)
         }
     }
+
 
     // Filmi başlığa görə axtarmaq üçün funksiya
     fun searchMovieByTitle(apiKey: String, title: String) {

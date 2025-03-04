@@ -13,20 +13,39 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SavedViewModel : ViewModel() {
+
     private val repository = Repository()
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val _movieResult = MutableLiveData<Resource<List<Movie>>>()
-    val movieResult: LiveData<Resource<List<Movie>>> = _movieResult
+    val movieResult: LiveData<Resource<List<Movie>>> get() = _movieResult
 
-    fun fetchSavedMovies(apikey: String) {
+    fun fetchSavedMovies(apiKey: String) {
         _movieResult.value = Resource.Loading
         firestore.collection("Saves").document(auth.currentUser!!.uid).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val savedPostIds = document.data?.keys?.map { it.toInt() } ?: emptyList()
-                    if (savedPostIds.isNotEmpty()) {
-                        fetchMoviesByIds(apikey, savedPostIds)
+                    // Firestore-dan bütün saxlanılan filmlərin məlumatlarını əldə edirik
+                    val savedMovies = document.data?.mapNotNull { (movieId, movieData) ->
+                        val movieMap = movieData as? Map<*, *>
+                        val posterPath = movieMap?.get("posterPath") as? String
+                        if (posterPath != null) {
+                            Movie(
+                                id = movieId.toInt(),
+                                title = "", // Bu hissəni sonradan doldururuq
+                                overview = "",
+                                poster_path = posterPath,
+                                release_date = "",
+                                isSaved = true
+                            )
+                        } else {
+                            null
+                        }
+                    } ?: emptyList()
+
+                    if (savedMovies.isNotEmpty()) {
+                        // Filmlərin tam məlumatlarını əldə etmək üçün API-yə sorğu göndəririk
+                        fetchMoviesByIds(apiKey, savedMovies)
                     } else {
                         _movieResult.value = Resource.Success(emptyList())
                     }
@@ -39,15 +58,17 @@ class SavedViewModel : ViewModel() {
             }
     }
 
-    private fun fetchMoviesByIds(apikey: String, movieIds: List<Int>) {
+    private fun fetchMoviesByIds(apiKey: String, savedMovies: List<Movie>) {
         val movies = mutableListOf<Movie>()
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         coroutineScope.launch {
-            val results = movieIds.mapNotNull { movieId ->
+            val results = savedMovies.mapNotNull { movie ->
                 try {
-                    val response = repository.getMovieById(movieId, apikey)
+                    // API-dən filmin tam məlumatlarını əldə edirik
+                    val response = repository.getMovieById(movie.id, apiKey)
                     if (response.isSuccessful) {
-                        response.body()?.results?.firstOrNull()
+                        val fullMovie = response.body()?.results?.firstOrNull()
+                        fullMovie?.copy(isSaved = true) // Filmin saxlanıldığını qeyd edirik
                     } else {
                         null
                     }

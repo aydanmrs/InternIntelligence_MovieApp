@@ -9,18 +9,18 @@ import com.bumptech.glide.Glide
 import com.example.movieapp.data.models.Movie
 import com.example.movieapp.databinding.ItemTopMoviesBinding
 
-class SavedAdapter(var itemClick: (item: Movie) -> Unit): RecyclerView.Adapter<SavedAdapter.SavedViewHolder>() {
+class SavedAdapter(
+    private val onMovieClick: (movie: Movie) -> Unit
+) : RecyclerView.Adapter<SavedAdapter.SavedViewHolder>() {
 
     // DiffUtil Callback
     private val diffUtilCallBack = object : DiffUtil.ItemCallback<Movie>() {
         override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
-            // Filmlərin unikal ID-lərinə əsaslanın
             return oldItem.id == newItem.id
         }
 
         override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {
-            // Filmlərin bütün məlumatlarını müqayisə edin
-            return oldItem == newItem
+            return oldItem.id == newItem.id && oldItem.poster_path == newItem.poster_path
         }
     }
 
@@ -50,14 +50,15 @@ class SavedAdapter(var itemClick: (item: Movie) -> Unit): RecyclerView.Adapter<S
 
     inner class SavedViewHolder(private val binding: ItemTopMoviesBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(movie: Movie) {
-            val baseUrl = "https://image.tmdb.org/t/p/w500"  // TMDB şəkil URL formatı
+            // Şəkli yüklə
+            val baseUrl = "https://image.tmdb.org/t/p/w500"
             Glide.with(binding.imgMoviePoster.context)
                 .load("$baseUrl${movie.poster_path}")
                 .into(binding.imgMoviePoster)
 
             // Filmə klikləmə hadisəsi
             itemView.setOnClickListener {
-                itemClick(movie)
+                onMovieClick(movie)
             }
         }
     }

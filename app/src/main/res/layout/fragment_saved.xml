@@ -1,4 +1,5 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,30 +7,59 @@
     android:background="#070420"
     tools:context=".ui.fragment.SavedFragment">
 
+    <!-- Saves TextView -->
     <TextView
+        android:id="@+id/saves"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Saves"
-        android:id="@+id/saves"
+        android:textSize="30sp"
+        android:textColor="@color/white"
+        android:layout_marginTop="40dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="40dp"
-        android:textSize="30sp"
-        android:textColor="@color/white"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- RecyclerView for Saved Movies -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSaves"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:contentDescription="movies"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="60dp"
-        app:layout_constraintTop_toBottomOf="@+id/saves"
         app:spanCount="2"
+        app:layout_constraintTop_toBottomOf="@id/saves"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         tools:listitem="@layout/item_top_movies" />
+
+    <!-- ProgressBar for Loading State -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/saves"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- TextView for Empty State -->
+    <TextView
+        android:id="@+id/textEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No saved movies found."
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/saves"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
